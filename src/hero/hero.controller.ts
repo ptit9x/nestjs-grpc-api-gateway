@@ -1,7 +1,5 @@
 import { Controller, Get, Inject, OnModuleInit, Param } from '@nestjs/common';
-import {
-  ClientGrpc,
-} from '@nestjs/microservices';
+import { ClientGrpc } from '@nestjs/microservices';
 import { Observable, ReplaySubject } from 'rxjs';
 import { toArray } from 'rxjs/operators';
 import { HeroById } from './interfaces/hero-by-id.interface';

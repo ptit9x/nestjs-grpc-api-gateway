@@ -1,29 +1,26 @@
-import { Controller, Get, Inject, OnModuleInit, Param } from '@nestjs/common';
-import {
-  ClientGrpc,
-} from '@nestjs/microservices';
+import { Controller, Get, Inject, OnModuleInit, Param, UseGuards } from '@nestjs/common';
+import { ClientGrpc } from '@nestjs/microservices';
 import { Observable, ReplaySubject } from 'rxjs';
 import { toArray } from 'rxjs/operators';
+import { AuthGuard } from 'src/auth/auth.guard';
 import { UserById } from './interfaces/user-by-id.interface';
 import { User } from './interfaces/user.interface';
-
-interface UserService {
-  findOne(data: UserById): Observable<User>;
-  findMany(upstream: Observable<UserById>): Observable<User>;
-}
+import { UserServiceClient, USER_SERVICE_NAME } from './user.pb';
 
 @Controller('user')
+@UseGuards(AuthGuard)
 export class UserController implements OnModuleInit {
   private readonly items: User[] = [
     { id: 1, name: 'John' },
     { id: 2, name: 'Doe' },
   ];
-  private userService: UserService;
+  private userService: UserServiceClient;
 
-  constructor(@Inject('USER_PACKAGE') private readonly client: ClientGrpc) {}
+  @Inject(USER_SERVICE_NAME)
+  private readonly client: ClientGrpc;
 
-  onModuleInit() {
-    this.userService = this.client.getService<UserService>('UserService');
+  onModuleInit(): void {
+    this.userService = this.client.getService<UserServiceClient>(USER_SERVICE_NAME);
   }
 
   @Get()
@@ -34,6 +31,7 @@ export class UserController implements OnModuleInit {
     ids$.complete();
 
     const stream = this.userService.findMany(ids$.asObservable());
+
     return stream.pipe(toArray());
   }
 
